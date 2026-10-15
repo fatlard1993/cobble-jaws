@@ -357,5 +357,15 @@
         }
       }
     }
+  },
+  "animation": {
+    "look": "body",
+    "idle": "cobble-jaws-justfatlard:shark_idle",
+    "moving": {
+      "animation": "cobble-jaws-justfatlard:shark_swim",
+      "pace": 2.5,
+      "strength": 3
+    },
+    "attack": "cobble-jaws-justfatlard:shark_bite"
   }
 }

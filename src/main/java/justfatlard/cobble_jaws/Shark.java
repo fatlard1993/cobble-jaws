@@ -2,44 +2,62 @@ package justfatlard.cobble_jaws;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.control.SmoothSwimmingLookControl;
+import net.minecraft.world.entity.ai.control.SmoothSwimmingMoveControl;
+import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
+import net.minecraft.world.entity.ai.goal.FollowPlayerRiddenEntityGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
+import net.minecraft.world.entity.ai.goal.TryFindLiquidGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.animal.AgeableWaterCreature;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.dolphin.Dolphin;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.animal.fish.Pufferfish;
 import net.minecraft.world.entity.animal.squid.Squid;
+import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * A shark: a dolphin's body with none of a dolphin's habits.
+ * A shark: passive unless provoked, and a hunter.
  *
- * <p>Built on the dolphin because it is the animal built like a shark already - a long body, a fin
- * on its back, a tail it drives itself with - and because Pandorical clients draw a registered
- * entity as the vanilla one it stands on. That is also why this class adds no synced data: the
- * client reads the shark's data by the dolphin's layout.
+ * <p>Its own animal, which Pandorical clients build from its model and nothing else. It swims the
+ * way a dolphin does - the same steering and turning, the same pull through the water - because
+ * that is the game's best swimmer, but it is not one: it breathes water, never surfaces, takes no
+ * fish from your hand and leads you to no treasure.
  *
- * <p>From the dolphin it keeps the swimming, the leaping, following boats and turning on whatever
- * hits it with the rest of its pod, which is the temper wanted: passive unless provoked. It drops
- * every goal the dolphin itself defines - leading you to treasure, giving you Dolphin's Grace,
- * playing with items - and adds two of the polar bear's rules instead: come near a pup and its
- * mother comes for you, and it hunts.
+ * <p>Left alone, it leaves you alone. Hit it and it comes for you, with the rest of its pod; come
+ * near a pup and its mother comes for you, as a polar bear does over its cub. And it hunts.
  */
-public class Shark extends Dolphin {
-	/** A wild shark's size against a dolphin, which is 1. Size is scale, never the hitbox. */
+public class Shark extends AgeableWaterCreature {
+	/** A wild shark's size against a dolphin's. Size is scale, never the hitbox. */
 	public static final float WILD_SCALE = 1.15F;
 
 	/**
@@ -49,6 +67,9 @@ public class Shark extends Dolphin {
 	 */
 	private static final double HEALTH_PER_SCALE = 20.0;
 	private static final double DAMAGE_PER_SCALE = 4.0;
+
+	/** As fast as a dolphin, the game's quickest swimmer. */
+	private static final double SWIM_SPEED = 1.2;
 
 	/** How close you can come to a pup before its mother takes it personally, in blocks. */
 	private static final double GUARD_RANGE = 8.0;
@@ -62,20 +83,21 @@ public class Shark extends Dolphin {
 	/** Anything wider than this is not prey, it is a fight. */
 	private static final float PREY_WIDTH = 0.7F;
 
-	/**
-	 * Faster than a dolphin's own lunge, and ahead of its idle swimming. The dolphin's own attack
-	 * goal sits behind its random swimming, which is why a provoked dolphin is so slow to follow up.
-	 */
+	/** Ahead of its idle swimming, so a provoked shark follows up at once. */
 	private static final double LUNGE_SPEED = 1.4;
+
+	/** A pup against its mother: a little bigger than half, like a dolphin calf. */
+	private static final float PUP_SCALE = 0.65F;
 
 	public Shark(EntityType<? extends Shark> type, Level level) {
 		super(type, level);
-		// A dolphin carrying a stick about is a dolphin.
-		this.setCanPickUpLoot(false);
+		this.moveControl = new SmoothSwimmingMoveControl(this, 85, 10, 0.02F, 0.1F, true);
+		this.lookControl = new SmoothSwimmingLookControl(this, 10);
 	}
 
 	public static AttributeSupplier.Builder createAttributes() {
-		return Dolphin.createAttributes()
+		return Mob.createMobAttributes()
+			.add(Attributes.MOVEMENT_SPEED, SWIM_SPEED)
 			.add(Attributes.SCALE, WILD_SCALE)
 			.add(Attributes.MAX_HEALTH, HEALTH_PER_SCALE * WILD_SCALE)
 			.add(Attributes.ATTACK_DAMAGE, DAMAGE_PER_SCALE * WILD_SCALE);
@@ -97,11 +119,16 @@ public class Shark extends Dolphin {
 
 	@Override
 	protected void registerGoals() {
-		super.registerGoals();
-		// Every goal the dolphin class defines for itself is a dolphin habit; the ones it borrows
-		// from the game's shared goals are the body, and stay.
-		this.goalSelector.removeAllGoals(goal -> goal.getClass().getEnclosingClass() == Dolphin.class);
+		this.goalSelector.addGoal(0, new TryFindLiquidGoal(this, FluidTags.WATER));
 		this.goalSelector.addGoal(1, new MeleeAttackGoal(this, LUNGE_SPEED, true));
+		this.goalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0, 10));
+		this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+		this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
+		// Circling under a boat is a shark's oldest trick.
+		this.goalSelector.addGoal(8, new FollowPlayerRiddenEntityGoal(this, AbstractBoat.class));
+		this.goalSelector.addGoal(9, new AvoidEntityGoal<>(this, Guardian.class, 8.0F, 1.0, 1.0));
+
+		this.targetSelector.addGoal(1, new HurtByTargetGoal(this, Guardian.class).setAlertOthers());
 		this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
 			(target, level) -> target.distanceToSqr(this) < GUARD_RANGE * GUARD_RANGE && guarding(level)));
 		this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, LivingEntity.class, HUNT_INTERVAL,
@@ -117,7 +144,7 @@ public class Shark extends Dolphin {
 	 */
 	public static boolean isPrey(LivingEntity target) {
 		if (!target.isInWater()) return false;
-		if (target instanceof Pufferfish || target instanceof Dolphin) return false;
+		if (target instanceof Pufferfish || target instanceof Dolphin || target instanceof Shark) return false;
 		if (target instanceof OwnableEntity pet && pet.getOwnerReference() != null) return false;
 		if (target instanceof AbstractFish || target instanceof Squid) return true;
 		return target instanceof Animal && target.getBbWidth() <= PREY_WIDTH;
@@ -130,27 +157,111 @@ public class Shark extends Dolphin {
 			Shark::isBaby).isEmpty();
 	}
 
+	@Override
+	public @Nullable SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty,
+			EntitySpawnReason spawnReason, @Nullable SpawnGroupData groupData) {
+		this.setXRot(0F);
+		// Now and then one of a pod is a pup, as with dolphins.
+		return super.finalizeSpawn(level, difficulty, spawnReason,
+			groupData != null ? groupData : new AgeableMob.AgeableMobGroupData(0.1F));
+	}
+
+	@Override
+	protected PathNavigation createNavigation(Level level) {
+		return new WaterBoundPathNavigation(this, level);
+	}
+
+	/** Through the water as a dolphin goes; sinking a little when it has nothing to chase. */
+	@Override
+	protected void travelInWater(Vec3 input, double baseGravity, boolean isFalling, double oldY) {
+		this.moveRelative(this.getSpeed(), input);
+		this.move(MoverType.SELF, this.getDeltaMovement());
+		this.setDeltaMovement(this.getDeltaMovement().scale(0.9));
+		if (this.getTarget() == null) this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.005, 0.0));
+	}
+
+	/** Out of the water it thrashes, which is how one stranded on a beach gets back in. */
+	@Override
+	public void tick() {
+		super.tick();
+		if (!this.isNoAi() && !this.isInWater() && this.onGround()) {
+			this.setDeltaMovement(this.getDeltaMovement().add((this.random.nextFloat() * 2F - 1F) * 0.2F, 0.5,
+				(this.random.nextFloat() * 2F - 1F) * 0.2F));
+			this.setYRot(this.random.nextFloat() * 360F);
+			this.setOnGround(false);
+			this.needsSync = true;
+			this.playSound(SoundEvents.SALMON_FLOP, this.getSoundVolume(), this.getVoicePitch());
+		}
+	}
+
 	/** It breathes water, so it never breaks off a chase to surface. */
 	@Override
 	public boolean canBreatheUnderwater() {
 		return true;
 	}
 
-	/** A dolphin fed a fish goes looking for treasure to show you. A shark takes no fish from your hand. */
+	/** A pup is too small to bite. */
 	@Override
-	protected InteractionResult mobInteract(Player player, InteractionHand hand) {
-		if (player.getItemInHand(hand).is(ItemTags.FISHES)) return InteractionResult.PASS;
-		return super.mobInteract(player, hand);
+	public boolean canAttack(LivingEntity target) {
+		return !this.isBaby() && super.canAttack(target);
 	}
 
 	@Override
-	public @Nullable Dolphin getBreedOffspring(ServerLevel level, AgeableMob partner) {
+	public float getAgeScale() {
+		return this.isBaby() ? PUP_SCALE : 1F;
+	}
+
+	/** Its head turns with its whole body, as a fish's does. */
+	@Override
+	public int getMaxHeadXRot() {
+		return 1;
+	}
+
+	@Override
+	public int getMaxHeadYRot() {
+		return 1;
+	}
+
+	@Override
+	public @Nullable Shark getBreedOffspring(ServerLevel level, AgeableMob partner) {
 		return Sharks.SHARK.create(level, EntitySpawnReason.BREEDING);
 	}
 
-	/** Named with a fallback, so a vanilla client shown the dolphin underneath still reads Shark. */
+	/** Named with a fallback, so a vanilla client shown the dolphin in its place still reads Shark. */
 	@Override
 	protected Component getTypeName() {
 		return Component.translatableWithFallback(this.getType().getDescriptionId(), "Shark");
+	}
+
+	// A shark makes no sound of its own until it is hurt. A big fish's voice, pitched down.
+
+	@Override
+	protected @Nullable SoundEvent getAmbientSound() {
+		return null;
+	}
+
+	@Override
+	protected SoundEvent getHurtSound(DamageSource source) {
+		return SoundEvents.SALMON_HURT;
+	}
+
+	@Override
+	protected SoundEvent getDeathSound() {
+		return SoundEvents.SALMON_DEATH;
+	}
+
+	@Override
+	protected SoundEvent getSwimSound() {
+		return SoundEvents.DOLPHIN_SWIM;
+	}
+
+	@Override
+	protected SoundEvent getSwimSplashSound() {
+		return SoundEvents.DOLPHIN_SPLASH;
+	}
+
+	@Override
+	public float getVoicePitch() {
+		return super.getVoicePitch() * 0.6F;
 	}
 }

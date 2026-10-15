@@ -7,11 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Sharks, out of the dolphin the game already has.
+ * Sharks in the warm seas.
  *
  * <p>Left alone, a shark leaves you alone. Hit one, or come near its pup, and it comes for you; and
- * it hunts the fish, squid and small animals that share its water. See {@link Shark} for why it is
- * built on the dolphin, which is the one decision everything else here follows from.
+ * it hunts the fish, squid and small animals that share its water.
  */
 public class Main implements ModInitializer {
 	public static final String MOD_ID = "cobble-jaws-justfatlard";

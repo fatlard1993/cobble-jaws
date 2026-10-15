@@ -6,10 +6,10 @@ The body and the skin come from one table, BOXES, because they are one thing: ev
 the sheet is decided here, and the model file and the painting both read it. A box moved in one
 and not the other is a skin smeared over the wrong faces, which the table makes impossible.
 
-The model is drawn by Pandorical in place of the dolphin's own geometry, built into the dolphin's
-model class so it swims with the dolphin's animation. That class reaches for three parts by name -
-body, body/tail and body/tail/tail_fin - and flexes them up and down as it swims; everything else
-is free to be a shark.
+The model is the shark's whole body: Pandorical draws it from this file alone, and moves it by the
+file's animation block - the body turns where the shark looks, and the animations in
+assets/cobble-jaws-justfatlard/animations sway the tail side to side, lagging into the tail fin,
+faster as it swims faster.
 
 Sides are painted by vanilla's box layout: across the top, the top face then the underside; below
 that, the four sides, starting with the animal's right flank (+x), then its front (-z), its left
@@ -91,6 +91,15 @@ SHARK = {
             },
         },
     },
+}
+
+# How the shark moves. The body turns to look; at rest it idles, on the move it swims, by the
+# distance it covers (pace) and taking over from the idle as it speeds up (strength); it bites.
+ANIMATION = {
+    "look": "body",
+    "idle": "cobble-jaws-justfatlard:shark_idle",
+    "moving": {"animation": "cobble-jaws-justfatlard:shark_swim", "pace": 2.5, "strength": 3},
+    "attack": "cobble-jaws-justfatlard:shark_bite",
 }
 
 BACK_DARK, BACK_LIGHT = (44, 52, 60), (88, 98, 108)
@@ -195,6 +204,7 @@ def write_model():
         "texture": "cobble-jaws-justfatlard:textures/entity/shark.png",
         "texture_size": list(SHEET),
         "parts": model_json(SHARK),
+        "animation": ANIMATION,
     }
     path.write_text(json.dumps(model, indent=2) + "\n")
     print(path.relative_to(HERE))

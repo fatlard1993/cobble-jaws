@@ -17,7 +17,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.animal.dolphin.Dolphin;
 import net.minecraft.world.entity.animal.fish.Cod;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Items;
@@ -30,9 +29,9 @@ import java.util.UUID;
 
 /**
  * What the mod promises, in a glass tank in the sky: a shark ignores you until you come near its
- * pup, hunts and eats a cod without leaving it floating, breathes water, has none of a dolphin's
- * habits, is called a Shark, is drawn by a Pandorical client as the dolphin it stands on and shown
- * to a vanilla one as that dolphin, and the big one on a fishing line comes up alive and after you.
+ * pup, hunts and eats a cod without leaving it floating, breathes water, is no dolphin, is called a
+ * Shark, is drawn by a Pandorical client from its own body and shown to a vanilla one as a dolphin,
+ * and the big one on a fishing line comes up alive and after you.
  */
 public final class SharkBehaviour implements FabricClientGameTest {
 
@@ -51,7 +50,7 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				connection.getServerPlayer().blockPosition().above(40));
 			server.runOnServer(s -> fill(s.overworld(), tank));
 
-			// A shark is a whole shark: sized, named, breathing water, with none of a dolphin's habits.
+			// A shark is a whole shark: sized, named, breathing water.
 			UUID shark = server.computeOnServer(s -> {
 				ServerLevel level = s.overworld();
 				Shark made = spawn(level, tank.offset(3, 2, 3), false);
@@ -59,14 +58,11 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				check(made.getMaxHealth() > 20F, "a shark is as frail as a dolphin: " + made.getMaxHealth());
 				check("Shark".equals(made.getName().getString()), "a shark is called " + made.getName().getString());
 				check(made.canBreatheUnderwater(), "a shark has to come up for air");
-				check(made.getGoalSelector().getAvailableGoals().stream()
-					.noneMatch(g -> g.getGoal().getClass().getEnclosingClass() == Dolphin.class),
-					"a shark kept a dolphin's habits (treasure, Dolphin's Grace, play)");
 				check(made.getBreedOffspring(level, made) instanceof Shark, "a shark's pup is a dolphin");
 				return made.getUUID();
 			});
 
-			// A Pandorical client draws it as the dolphin it stands on, under the shark's own type.
+			// A Pandorical client draws it from its own body, under the shark's own type.
 			context.waitTicks(10);
 			String seen = context.computeOnClient(client -> {
 				net.minecraft.world.entity.Entity entity = null;
@@ -74,17 +70,16 @@ public final class SharkBehaviour implements FabricClientGameTest {
 					if (each.getUUID().equals(shark)) entity = each;
 				}
 				if (entity == null) return "nothing";
-				// A Dolphin on a client without the mod; the Shark itself where the mod is installed,
-				// as it is in this singleplayer world. Either way, the dolphin's renderer has to draw it.
-				if (!(entity instanceof Dolphin)) return entity.getClass().getSimpleName();
+				// A generic mob on a client without the mod; the Shark itself where the mod is
+				// installed, as it is in this singleplayer world. Either way, drawn from its body.
 				var renderer = client.getEntityRenderDispatcher().getRenderer(entity);
 				if (renderer == null) return "no renderer";
-				return "Dolphin as "
+				return renderer.getClass().getSimpleName() + " for "
 					+ net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
 			});
-			check(seen.equals("Dolphin as cobble-jaws-justfatlard:shark"), "the client stood the shark in as " + seen);
+			check(seen.equals("BodyRenderer for cobble-jaws-justfatlard:shark"), "the client drew the shark with " + seen);
 
-			// A vanilla client is shown the dolphin underneath, and nothing it cannot read.
+			// A vanilla client is shown a dolphin in its place, which can read everything a shark syncs.
 			server.runOnServer(s -> {
 				ServerPlayer player = connection.getServerPlayer();
 				Shark made = (Shark) s.overworld().getEntity(shark);
@@ -106,7 +101,7 @@ public final class SharkBehaviour implements FabricClientGameTest {
 			server.runOnServer(s -> connection.getServerPlayer().teleportTo(
 				tank.getX() + 5.5, tank.getY() + 2, tank.getZ() + 5.5));
 			context.waitTicks(100);
-			server.runOnServer(s -> check(((Dolphin) s.overworld().getEntity(shark)).getTarget() == null,
+			server.runOnServer(s -> check(((Shark) s.overworld().getEntity(shark)).getTarget() == null,
 				"a shark nobody touched went after the player"));
 
 			// Near its pup, it does not.
@@ -114,7 +109,7 @@ public final class SharkBehaviour implements FabricClientGameTest {
 			boolean guarded = false;
 			for (int i = 0; i < 10 && !guarded; i++) {
 				context.waitTicks(20);
-				guarded = server.computeOnServer(s -> ((Dolphin) s.overworld().getEntity(shark)).getTarget()
+				guarded = server.computeOnServer(s -> ((Shark) s.overworld().getEntity(shark)).getTarget()
 					instanceof ServerPlayer);
 			}
 			check(guarded, "a shark let the player swim right up to its pup");
@@ -126,9 +121,9 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				// stand for a minute and a half without drowning or falling.
 				connection.getServerPlayer().teleportTo(tank.getX() + 5.5, tank.getY() + DEPTH + 4,
 					tank.getZ() + 5.5);
-				level.getEntitiesOfClass(Dolphin.class, box(tank), d -> !d.getUUID().equals(shark))
-					.forEach(Dolphin::discard);
-				Dolphin made = (Dolphin) level.getEntity(shark);
+				level.getEntitiesOfClass(Shark.class, box(tank), d -> !d.getUUID().equals(shark))
+					.forEach(Shark::discard);
+				Shark made = (Shark) level.getEntity(shark);
 				made.setTarget(null);
 				made.setLastHurtByMob(null);
 				made.setHealth(made.getMaxHealth() - 8F);
@@ -150,7 +145,7 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				List<ItemEntity> floating = level.getEntitiesOfClass(ItemEntity.class, box(tank),
 					item -> item.getItem().is(Items.COD));
 				check(floating.isEmpty(), "an eaten cod was left floating");
-				Dolphin made = (Dolphin) level.getEntity(shark);
+				Shark made = (Shark) level.getEntity(shark);
 				check(made.getHealth() > made.getMaxHealth() - 8F, "a meal did not feed the shark");
 			});
 
@@ -159,17 +154,17 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				ServerLevel level = s.overworld();
 				ServerPlayer player = connection.getServerPlayer();
 				player.teleportTo(tank.getX() + 5.5, tank.getY() + DEPTH + 1, tank.getZ() + 0.5);
-				level.getEntitiesOfClass(Dolphin.class, box(tank)).forEach(Dolphin::discard);
+				level.getEntitiesOfClass(Shark.class, box(tank)).forEach(Shark::discard);
 				Quarry quarry = sharkQuarry();
 				Vec3 origin = new Vec3(tank.getX() + 5.5, tank.getY() + DEPTH - 0.5, tank.getZ() + 5.5);
 				check(quarry.getBonusItem() == Items.COD, "a shark is not cut into whitefish");
 				check(!quarry.landAlive(level, player, origin, FishSize.SMALL), "a small shark came up alive");
 				check(!quarry.landAlive(level, player, origin, FishSize.MEDIUM), "a medium shark came up alive");
-				check(level.getEntitiesOfClass(Dolphin.class, box(tank)).isEmpty(),
+				check(level.getEntitiesOfClass(Shark.class, box(tank)).isEmpty(),
 					"a shark that was landed was put in the water too");
 				check(quarry.landAlive(level, player, origin, FishSize.LARGE), "a large shark was landed");
-				List<Dolphin> up = level.getEntitiesOfClass(Dolphin.class, box(tank));
-				check(up.size() == 1 && up.getFirst() instanceof Shark, "a large shark did not surface");
+				List<Shark> up = level.getEntitiesOfClass(Shark.class, box(tank));
+				check(up.size() == 1, "a large shark did not surface");
 				check(up.getFirst().getTarget() == player, "a hooked shark came up calm");
 				check(up.getFirst().getScale() > Shark.WILD_SCALE, "a large shark is wild-sized");
 			});
@@ -187,17 +182,17 @@ public final class SharkBehaviour implements FabricClientGameTest {
 	}
 
 	private static Shark spawn(ServerLevel level, BlockPos at, boolean pup) {
-		Shark dolphin = Sharks.SHARK.create(level, EntitySpawnReason.COMMAND);
-		if (pup) dolphin.setAge(-24000);
-		dolphin.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
-		dolphin.setPersistenceRequired();
-		level.addFreshEntity(dolphin);
-		return dolphin;
+		Shark shark = Sharks.SHARK.create(level, EntitySpawnReason.COMMAND);
+		if (pup) shark.setAge(-24000);
+		shark.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
+		shark.setPersistenceRequired();
+		level.addFreshEntity(shark);
+		return shark;
 	}
 
 	/**
-	 * A closed glass tank, water with an air gap over it. Closed because a shark is a dolphin and
-	 * leaps, and a tank in the sky with an open top is a forty-block drop one jump away.
+	 * A closed glass tank, water with an air gap over it. Closed because a shark that breaks the
+	 * surface in a tank in the sky with an open top is a forty-block drop one splash away.
 	 */
 	private static void fill(ServerLevel level, BlockPos corner) {
 		for (int x = -1; x <= TANK; x++) for (int z = -1; z <= TANK; z++) for (int y = 0; y <= DEPTH + 3; y++) {

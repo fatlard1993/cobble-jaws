@@ -23,11 +23,11 @@ import net.minecraft.world.level.levelgen.Heightmap;
 /**
  * The shark as the game knows it: an entity type, its spawn egg, and how Pandorical draws it.
  *
- * <p>Pandorical clients draw it with a shark's body - a tall dorsal fin, an upright tail, a blunt
- * snout - built into the dolphin's model so it swims as a dolphin does; vanilla clients are
- * shown the dolphin itself, because a shark nobody can see biting you is worse than a dolphin that
- * does. It is a dolphin's size because the client sizes the stand-in as its base: a shark's extra
- * bulk is its scale attribute, which every client reads.
+ * <p>Pandorical clients build it from its model alone - a tall dorsal fin, an upright tail, a blunt
+ * snout - and swing its tail side to side as it swims. Vanilla clients are shown a dolphin in its
+ * place, because a shark nobody can see biting you is worse than a dolphin that does; a dolphin can
+ * read everything a shark syncs, which is what lets it stand in. It is a dolphin's size, and a
+ * shark's extra bulk is its scale attribute, which every client reads.
  */
 public final class Sharks {
 	private Sharks() {}
@@ -49,7 +49,7 @@ public final class Sharks {
 		.setId(ResourceKey.create(Registries.ITEM, EGG_ID))
 		.spawnEgg(SHARK));
 
-	/** The shark's own body, from {@code generate_textures.py}, swimming with the dolphin's animation. */
+	/** The shark's own body and how it moves, from {@code generate_textures.py}. */
 	public static final Identifier MODEL = Identifier.fromNamespaceAndPath(Main.MOD_ID, "shark");
 	public static final Identifier SKIN = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/entity/shark.png");
 
@@ -58,11 +58,9 @@ public final class Sharks {
 		Registry.register(BuiltInRegistries.ITEM, EGG_ID, SPAWN_EGG);
 
 		PandoricalApi.content().registerEntity(SHARK, new EntityRegistration()
-			.base(EntityTypes.DOLPHIN)
-			// One skin for adult and pup: both are drawn with this model, so both use its layout.
 			.model(MODEL)
 			.texture(SKIN)
-			.vanillaFallback());
+			.vanillaFallback(EntityTypes.DOLPHIN));
 		PandoricalApi.content().registerItem(EGG_ID.toString(), new ItemRegistration());
 
 		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS)

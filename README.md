@@ -26,15 +26,15 @@ Server-side; Pandorical carries the client's half.
 
 **It hunts.** Every so often a shark looks around for something to eat: cod, salmon, tropical fish, squid, glow squid, or any small animal in the water with it, such as a chicken, a rabbit, a frog or a calf that has wandered in. It eats what it kills, so nothing is left floating, and a meal heals it. It leaves pufferfish alone, and it leaves pets alone.
 
-**It is not a dolphin.** A shark breathes water, so it never breaks off a chase to surface. It doesn't swim alongside you handing out Dolphin's Grace, won't take a fish from your hand or lead you to treasure, and doesn't push items around.
+**It is not a dolphin.** It swims as fast as one, but it breathes water, so it never breaks off a chase to surface. It doesn't swim alongside you handing out Dolphin's Grace, won't take a fish from your hand or lead you to treasure, and doesn't push items around. It does like to circle a boat.
 
 **Killing one** drops two or three whitefish (raw cod), cooked if it was on fire. A pup drops nothing.
 
 **There is a Shark Spawn Egg**, with the other spawn eggs in creative. `/summon cobble-jaws-justfatlard:shark` works too.
 
-## Built On The Dolphin
+## Its Own Animal
 
-A shark is its own animal, `cobble-jaws-justfatlard:shark`, with its own spawns, loot and behaviour, and its own body: a tall raked dorsal fin, an upright tail with the long lobe on top, a blunt snout over a row of teeth, gill slits, and a dark back over a white belly. Pandorical lets a server's mod add a new mob as long as it stands on one the game already knows how to move, and the shark stands on the dolphin, the one built most like it. So it swims, leaps and follows boats exactly as a dolphin does - including flexing its tail up and down as it swims, the dolphin's way, rather than side to side.
+A shark is `cobble-jaws-justfatlard:shark`, with its own spawns, loot and behaviour, and its own body: a tall raked dorsal fin, an upright tail with the long lobe on top, a blunt snout over a row of teeth, gill slits, and a dark back over a white belly. It swims by sweeping its tail side to side, the tail fin a beat behind, harder the faster it goes; hanging still it barely moves; and it throws its head back to bite.
 
 ## Spawning
 
@@ -51,9 +51,9 @@ Without Minedew Fishing there is no shark fishing; the sharks are simply in the 
 
 ## Pandorical
 
-Pandorical is required on the server, and on a player's client to see sharks as sharks; the mod will not load without it on the server.
+Pandorical 15.21 or later is required on the server, and on a player's client to see sharks as sharks; the mod will not load without it on the server.
 
-**Without Pandorical client-side**, a player sees each shark as a dolphin, and it still bites like a shark. The skin is the one thing such a client can't be handed. A dolphin that comes for you is a better warning than a shark you can't see.
+**Without Pandorical client-side**, or with one older than 15.21, a player sees each shark as a dolphin, and it still bites like a shark. A dolphin that comes for you is a better warning than a shark you can't see.
 
 ## Development
 
