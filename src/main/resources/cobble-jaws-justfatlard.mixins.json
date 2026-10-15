@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "justfatlard.cobble_jaws.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"MobAccessor",
+		"SharkBodyMixin",
+		"SharkBreedingMixin",
+		"SharkGrowsUpMixin",
+		"SharkNameMixin",
+		"SharkSpawnMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

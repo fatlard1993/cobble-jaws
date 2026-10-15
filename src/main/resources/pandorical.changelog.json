@@ -1,0 +1,16 @@
+{
+	"overview": [
+		"Sharks in the warm seas, built out of the dolphin the game already has. They leave you alone until you hit one or come near its pup."
+	],
+	"versions": {
+		"1.0.0": [
+			"Sharks in the warm and temperate oceans, on top of the dolphins already there.",
+			"A shark leaves you alone unless you hit it or come near its pup.",
+			"Sharks hunt fish, squid and small animals in the water, and eat what they catch.",
+			"A shark breathes water, and gives no Dolphin's Grace.",
+			"With Minedew Fishing, a shark can take your bait in the ocean.",
+			"A small or medium shark is landed as whitefish fillets.",
+			"A large one comes up out of the water alive, and you have to fight it."
+		]
+	}
+}

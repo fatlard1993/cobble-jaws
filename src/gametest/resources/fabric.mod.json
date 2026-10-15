@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "cobble-jaws-gametest",
+	"version": "1.0.0",
+	"name": "Cobble Jaws tests",
+	"description": "Loads the mod and joins a world, then puts a shark in a tank and holds it to what the readme says.",
+	"license": "MIT",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-client-gametest": [
+			"justfatlard.cobble_jaws.gametest.SmokeTest",
+			"justfatlard.cobble_jaws.gametest.SharkBehaviour"
+		]
+	},
+	"depends": {
+		"cobble-jaws-justfatlard": "*",
+		"minedew-fishing": "*",
+		"fabric-client-gametest-api-v1": "*"
+	}
+}
