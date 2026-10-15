@@ -23,7 +23,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 /**
  * The shark as the game knows it: an entity type, its spawn egg, and how Pandorical draws it.
  *
- * <p>Pandorical clients draw it as the dolphin it stands on, in a shark's skin; vanilla clients are
+ * <p>Pandorical clients draw it with a shark's body - a tall dorsal fin, an upright tail, a blunt
+ * snout - built into the dolphin's model so it swims as a dolphin does; vanilla clients are
  * shown the dolphin itself, because a shark nobody can see biting you is worse than a dolphin that
  * does. It is a dolphin's size because the client sizes the stand-in as its base: a shark's extra
  * bulk is its scale attribute, which every client reads.
@@ -48,10 +49,9 @@ public final class Sharks {
 		.setId(ResourceKey.create(Registries.ITEM, EGG_ID))
 		.spawnEgg(SHARK));
 
-	public static Identifier skin(boolean pup) {
-		return Identifier.fromNamespaceAndPath(Main.MOD_ID,
-			pup ? "textures/entity/shark_pup.png" : "textures/entity/shark.png");
-	}
+	/** The shark's own body, from {@code generate_textures.py}, swimming with the dolphin's animation. */
+	public static final Identifier MODEL = Identifier.fromNamespaceAndPath(Main.MOD_ID, "shark");
+	public static final Identifier SKIN = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/entity/shark.png");
 
 	public static void register() {
 		Registry.register(BuiltInRegistries.ENTITY_TYPE, ID, SHARK);
@@ -59,8 +59,9 @@ public final class Sharks {
 
 		PandoricalApi.content().registerEntity(SHARK, new EntityRegistration()
 			.base(EntityTypes.DOLPHIN)
-			.texture(skin(false))
-			.babyTexture(skin(true))
+			// One skin for adult and pup: both are drawn with this model, so both use its layout.
+			.model(MODEL)
+			.texture(SKIN)
 			.vanillaFallback());
 		PandoricalApi.content().registerItem(EGG_ID.toString(), new ItemRegistration());
 

@@ -23,7 +23,9 @@ python3 generate_textures.py
 python3 generate_icon.py
 ```
 
-`generate_textures.py` reads the vanilla dolphin and baby dolphin sheets straight out of the Loom cache and recolours them against luminance, so the shading and the eyes land where the model expects them. The back and belly are picked by where each model box's faces sit on the sheet, not by colour, because a dolphin is nearly one blue all over; the boxes are copied from `DolphinModel` and `BabyDolphinModel`. It also recolours the dolphin spawn egg into the shark's.
+`generate_textures.py` writes the shark's model (`pandorical/entity_models/shark.json`) and paints its skin (`textures/entity/shark.png`) from one table of boxes, so a box cannot move on the sheet without its paint moving with it. The model is built into the dolphin's model class, which looks for `body`, `body/tail` and `body/tail/tail_fin` by name and flexes those three as it swims; every other part is free. It also recolours the dolphin spawn egg into the shark's.
+
+`SharkPictured` photographs an adult and a pup, side on and from ahead, into `build/run/clientGameTest/screenshots/`: the way to see a change to the model.
 
 `generate_icon.py` paints a fin over a sea tinted from the vanilla water texture.
 

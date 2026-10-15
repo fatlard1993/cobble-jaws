@@ -9,7 +9,8 @@
 	"entrypoints": {
 		"fabric-client-gametest": [
 			"justfatlard.cobble_jaws.gametest.SmokeTest",
-			"justfatlard.cobble_jaws.gametest.SharkBehaviour"
+			"justfatlard.cobble_jaws.gametest.SharkBehaviour",
+			"justfatlard.cobble_jaws.gametest.SharkPictured"
 		]
 	},
 	"depends": {

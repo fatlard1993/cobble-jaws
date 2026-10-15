@@ -34,7 +34,7 @@ Server-side; Pandorical carries the client's half.
 
 ## Built On The Dolphin
 
-A shark is its own animal, `cobble-jaws-justfatlard:shark`, with its own spawns, loot and behaviour. What a player's game is told to draw is a dolphin in a shark's skin, with a dark back and a white belly: Pandorical lets a server's mod add a new mob as long as it stands on one the game already knows how to move, and the dolphin is the one built like a shark already. So it swims, leaps and follows boats exactly as a dolphin does.
+A shark is its own animal, `cobble-jaws-justfatlard:shark`, with its own spawns, loot and behaviour, and its own body: a tall raked dorsal fin, an upright tail with the long lobe on top, a blunt snout over a row of teeth, gill slits, and a dark back over a white belly. Pandorical lets a server's mod add a new mob as long as it stands on one the game already knows how to move, and the shark stands on the dolphin, the one built most like it. So it swims, leaps and follows boats exactly as a dolphin does - including flexing its tail up and down as it swims, the dolphin's way, rather than side to side.
 
 ## Spawning
 
