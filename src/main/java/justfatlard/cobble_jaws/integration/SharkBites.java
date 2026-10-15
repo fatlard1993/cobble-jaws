@@ -5,9 +5,9 @@ import com.minedew.fishing.fish.FishMovementPattern;
 import com.minedew.fishing.fish.FishSize;
 import com.minedew.fishing.fish.Quarry;
 import justfatlard.cobble_jaws.Awards;
+import justfatlard.cobble_jaws.Shark;
 import justfatlard.cobble_jaws.Sharks;
 import justfatlard.cobble_jaws.Spawns;
-import justfatlard.pandorical.api.PandoricalApi;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -17,9 +17,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EntityTypes;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.dolphin.Dolphin;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -46,7 +43,7 @@ public final class SharkBites implements Quarry {
 	private static final float OCEAN_CHANCE = 0.03F;
 	private static final float DEEP_CHANCE = 0.06F;
 
-	/** How big a shark that comes up alive is; a wild one is {@link Sharks#WILD_SCALE}. */
+	/** How big a shark that comes up alive is; a wild one is {@link Shark#WILD_SCALE}. */
 	private static final float LARGE_SCALE = 1.35F;
 	private static final float TROPHY_SCALE = 1.7F;
 
@@ -111,18 +108,12 @@ public final class SharkBites implements Quarry {
 
 	@Override
 	public EntityType<?> getDisplayEntity() {
-		return EntityTypes.DOLPHIN;
+		return Sharks.SHARK;
 	}
 
 	@Override
 	public boolean isJunk() {
 		return false;
-	}
-
-	/** The fish that flies in is a dolphin in a shark's skin, and never tagged: it is theatre. */
-	@Override
-	public void dressDisplay(Mob shown, FishSize size) {
-		PandoricalApi.entityOverlays().set(shown, Sharks.skin(false));
 	}
 
 	@Override
@@ -134,10 +125,10 @@ public final class SharkBites implements Quarry {
 		};
 		if (scale == 0F) return false;
 
-		Dolphin shark = EntityTypes.DOLPHIN.create(level, EntitySpawnReason.TRIGGERED);
+		Shark shark = Sharks.SHARK.create(level, EntitySpawnReason.TRIGGERED);
 		if (shark == null) return false;
 		shark.setPos(origin.x, origin.y, origin.z);
-		Sharks.become(shark, scale);
+		shark.grow(scale);
 		// It was dragged up on a hook, so it is not going to wander off and despawn mid-fight.
 		shark.setPersistenceRequired();
 		if (!level.addFreshEntity(shark)) return false;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-The shark's skin, adult and pup, recoloured from the dolphin's own two textures.
+The shark's skin, adult and pup, and its spawn egg, recoloured from the dolphin's own textures.
 
 Drawn from vanilla so every pixel lands where the dolphin model expects it, and the shading the
 dolphin already has survives: each pixel keeps where it sat between the dolphin's darkest and
@@ -107,6 +107,29 @@ def recolour(source: Image.Image, boxes) -> Image.Image:
     return out
 
 
+EGG_SOURCE = "assets/minecraft/textures/item/dolphin_spawn_egg.png"
+EGG_OUT = Path(__file__).parent / "src/main/resources/assets/cobble-jaws-justfatlard/textures/item"
+# Above this a pixel of the egg is a spot, and the spots are belly white.
+EGG_SPOT = 200
+
+
+def recolour_egg(source: Image.Image) -> Image.Image:
+    out = Image.new("RGBA", source.size)
+    src = source.convert("RGBA").load()
+    dst = out.load()
+    for y in range(source.height):
+        for x in range(source.width):
+            r, g, b, a = src[x, y]
+            if a == 0:
+                dst[x, y] = (0, 0, 0, 0)
+                continue
+            luma = (r * 299 + g * 587 + b * 114) // 1000
+            dark, light = BELLY if luma >= EGG_SPOT else BACK
+            t = min(1.0, max(0.0, luma / 255))
+            dst[x, y] = tuple(round(dark[i] + (light[i] - dark[i]) * t) for i in range(3)) + (a,)
+    return out
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(CLIENT_JAR) as jar:
@@ -117,6 +140,15 @@ def main() -> None:
             path = OUT / f"{name}.png"
             recolour(dolphin, boxes).save(path)
             print(f"{path.relative_to(Path(__file__).parent)}  {dolphin.width}x{dolphin.height}")
+
+        # The egg has no boxes: its pale spots are the belly and the rest is back.
+        with jar.open(EGG_SOURCE) as handle:
+            egg = Image.open(handle).convert("RGBA")
+            egg.load()
+        EGG_OUT.mkdir(parents=True, exist_ok=True)
+        path = EGG_OUT / "shark_spawn_egg.png"
+        recolour_egg(egg).save(path)
+        print(f"{path.relative_to(Path(__file__).parent)}  {egg.width}x{egg.height}")
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@
 	"id": "cobble-jaws-justfatlard",
 	"version": "${version}",
 	"name": "Cobble Jaws",
-	"description": "Sharks in the warm seas, built from the dolphin the game already has. They leave you alone until you hit one or come near its pup, and they hunt the fish around them.",
+	"description": "Sharks in the warm seas, built on the dolphin the game already has. They leave you alone until you hit one or come near its pup, and they hunt the fish around them.",
 	"authors": [
 		"justfatlard"
 	],
@@ -20,14 +20,11 @@
 			"justfatlard.cobble_jaws.Main"
 		]
 	},
-	"mixins": [
-		"cobble-jaws-justfatlard.mixins.json"
-	],
 	"depends": {
 		"fabricloader": ">=${loaderVersion}",
 		"minecraft": "${minecraftDependency}",
 		"java": ">=25",
-		"pandorical": ">=15.0.0",
+		"pandorical": ">=15.20.0",
 		"fabric-api": "${fabricApiVersion}"
 	},
 	"suggests": {

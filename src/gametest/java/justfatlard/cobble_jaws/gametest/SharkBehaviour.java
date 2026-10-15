@@ -2,7 +2,10 @@ package justfatlard.cobble_jaws.gametest;
 
 import com.minedew.fishing.fish.FishSize;
 import com.minedew.fishing.fish.Quarry;
+import justfatlard.cobble_jaws.Shark;
 import justfatlard.cobble_jaws.Sharks;
+import justfatlard.pandorical.entitykind.EntityKinds;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import justfatlard.cobble_jaws.integration.SharkBites;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
@@ -12,8 +15,6 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.dolphin.Dolphin;
@@ -29,8 +30,9 @@ import java.util.UUID;
 
 /**
  * What the mod promises, in a glass tank in the sky: a shark ignores you until you come near its
- * pup, hunts and eats a cod without leaving it floating, breathes water, swims with nobody, is
- * called a Shark, and the big one on a fishing line comes up alive and after you.
+ * pup, hunts and eats a cod without leaving it floating, breathes water, has none of a dolphin's
+ * habits, is called a Shark, is drawn by a Pandorical client as the dolphin it stands on and shown
+ * to a vanilla one as that dolphin, and the big one on a fishing line comes up alive and after you.
  */
 public final class SharkBehaviour implements FabricClientGameTest {
 
@@ -49,27 +51,55 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				connection.getServerPlayer().blockPosition().above(40));
 			server.runOnServer(s -> fill(s.overworld(), tank));
 
-			// A shark summoned by tag is a whole shark: sized, named, breathing water.
+			// A shark is a whole shark: sized, named, breathing water, with none of a dolphin's habits.
 			UUID shark = server.computeOnServer(s -> {
 				ServerLevel level = s.overworld();
-				Dolphin made = spawn(level, tank.offset(3, 2, 3), false);
-				check(made.getScale() > 1.1F, "a tagged dolphin was never sized: " + made.getScale());
-				check(made.getMaxHealth() > 20F, "a tagged dolphin was never toughened: " + made.getMaxHealth());
+				Shark made = spawn(level, tank.offset(3, 2, 3), false);
+				check(made.getScale() > 1.1F, "a shark is dolphin-sized: " + made.getScale());
+				check(made.getMaxHealth() > 20F, "a shark is as frail as a dolphin: " + made.getMaxHealth());
 				check("Shark".equals(made.getName().getString()), "a shark is called " + made.getName().getString());
 				check(made.canBreatheUnderwater(), "a shark has to come up for air");
-				Dolphin dolphin = EntityTypes.DOLPHIN.create(level, EntitySpawnReason.COMMAND);
-				check(!dolphin.canBreatheUnderwater(), "plain dolphins stopped needing air");
-				check(Sharks.is(made.getBreedOffspring(level, made)), "a shark's pup is a dolphin");
+				check(made.getGoalSelector().getAvailableGoals().stream()
+					.noneMatch(g -> g.getGoal().getClass().getEnclosingClass() == Dolphin.class),
+					"a shark kept a dolphin's habits (treasure, Dolphin's Grace, play)");
+				check(made.getBreedOffspring(level, made) instanceof Shark, "a shark's pup is a dolphin");
 				return made.getUUID();
 			});
 
-			// It swims with nobody.
+			// A Pandorical client draws it as the dolphin it stands on, under the shark's own type.
+			context.waitTicks(10);
+			String seen = context.computeOnClient(client -> {
+				net.minecraft.world.entity.Entity entity = null;
+				for (var each : client.level.entitiesForRendering()) {
+					if (each.getUUID().equals(shark)) entity = each;
+				}
+				if (entity == null) return "nothing";
+				// A Dolphin on a client without the mod; the Shark itself where the mod is installed,
+				// as it is in this singleplayer world. Either way, the dolphin's renderer has to draw it.
+				if (!(entity instanceof Dolphin)) return entity.getClass().getSimpleName();
+				var renderer = client.getEntityRenderDispatcher().getRenderer(entity);
+				if (renderer == null) return "no renderer";
+				return "Dolphin as "
+					+ net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+			});
+			check(seen.equals("Dolphin as cobble-jaws-justfatlard:shark"), "the client stood the shark in as " + seen);
+
+			// A vanilla client is shown the dolphin underneath, and nothing it cannot read.
 			server.runOnServer(s -> {
 				ServerPlayer player = connection.getServerPlayer();
-				Dolphin made = (Dolphin) s.overworld().getEntity(shark);
-				check(!player.addEffect(new MobEffectInstance(MobEffects.DOLPHINS_GRACE, 100), made),
-					"a shark handed out Dolphin's Grace");
-				check(!player.hasEffect(MobEffects.DOLPHINS_GRACE), "Dolphin's Grace stuck anyway");
+				Shark made = (Shark) s.overworld().getEntity(shark);
+				EntityKinds.understood(player.getUUID(), false);
+				try {
+					check(EntityKinds.mayShow(made, player), "a vanilla client was refused a shark it has a fallback for");
+					var packet = EntityKinds.forPlayer(new ClientboundAddEntityPacket(made.getId(), made.getUUID(),
+						made.getX(), made.getY(), made.getZ(), 0F, 0F, made.getType(), 0, Vec3.ZERO, 0), player);
+					check(packet.getType() == EntityTypes.DOLPHIN, "a vanilla client was sent " + packet.getType());
+				} finally {
+					EntityKinds.understood(player.getUUID(), true);
+				}
+				var packet = EntityKinds.forPlayer(new ClientboundAddEntityPacket(made.getId(), made.getUUID(),
+					made.getX(), made.getY(), made.getZ(), 0F, 0F, made.getType(), 0, Vec3.ZERO, 0), player);
+				check(packet.getType() == Sharks.SHARK, "a Pandorical client was sent " + packet.getType());
 			});
 
 			// Left alone, it leaves you alone: in the water with it for five seconds.
@@ -139,9 +169,9 @@ public final class SharkBehaviour implements FabricClientGameTest {
 					"a shark that was landed was put in the water too");
 				check(quarry.landAlive(level, player, origin, FishSize.LARGE), "a large shark was landed");
 				List<Dolphin> up = level.getEntitiesOfClass(Dolphin.class, box(tank));
-				check(up.size() == 1 && Sharks.is(up.getFirst()), "a large shark did not surface");
+				check(up.size() == 1 && up.getFirst() instanceof Shark, "a large shark did not surface");
 				check(up.getFirst().getTarget() == player, "a hooked shark came up calm");
-				check(up.getFirst().getScale() > Sharks.WILD_SCALE, "a large shark is wild-sized");
+				check(up.getFirst().getScale() > Shark.WILD_SCALE, "a large shark is wild-sized");
 			});
 		}
 	}
@@ -156,9 +186,8 @@ public final class SharkBehaviour implements FabricClientGameTest {
 		}
 	}
 
-	private static Dolphin spawn(ServerLevel level, BlockPos at, boolean pup) {
-		Dolphin dolphin = EntityTypes.DOLPHIN.create(level, EntitySpawnReason.COMMAND);
-		dolphin.addTag(Sharks.TAG);
+	private static Shark spawn(ServerLevel level, BlockPos at, boolean pup) {
+		Shark dolphin = Sharks.SHARK.create(level, EntitySpawnReason.COMMAND);
 		if (pup) dolphin.setAge(-24000);
 		dolphin.snapTo(at.getX() + 0.5, at.getY(), at.getZ() + 0.5);
 		dolphin.setPersistenceRequired();

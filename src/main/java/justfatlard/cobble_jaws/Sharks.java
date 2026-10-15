@@ -1,103 +1,70 @@
 package justfatlard.cobble_jaws;
 
+import justfatlard.pandorical.api.EntityRegistration;
+import justfatlard.pandorical.api.ItemRegistration;
 import justfatlard.pandorical.api.PandoricalApi;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityType;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.dolphin.Dolphin;
-import org.jspecify.annotations.Nullable;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.animal.AgeableWaterCreature;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 /**
- * Which dolphins are sharks, and what being one does to the body.
+ * The shark as the game knows it: an entity type, its spawn egg, and how Pandorical draws it.
  *
- * <p>A shark is a {@link Dolphin}. The game will not let a server-side mod hand a client a new
- * creature to draw, so a new animal would be invisible on every vanilla client; what it will do is
- * let an existing one be a different size and wear a different skin. The dolphin is the one built
- * like a shark already - a long body, a fin on its back, a tail it drives itself with - and it
- * already fights back when hit, which is half the temper wanted.
- *
- * <p>Which dolphin is a shark is written on it as a tag rather than held in a table here. Tags ride
- * along in the entity's own save data, survive this mod being removed, and can be read and set by
- * command, which is also how a shark is summoned by hand:
- * {@code /summon minecraft:dolphin ~ ~ ~ {Tags:["shark"]}}.
+ * <p>Pandorical clients draw it as the dolphin it stands on, in a shark's skin; vanilla clients are
+ * shown the dolphin itself, because a shark nobody can see biting you is worse than a dolphin that
+ * does. It is a dolphin's size because the client sizes the stand-in as its base: a shark's extra
+ * bulk is its scale attribute, which every client reads.
  */
 public final class Sharks {
 	private Sharks() {}
 
-	public static final String TAG = "shark";
+	private static final Identifier ID = Identifier.fromNamespaceAndPath(Main.MOD_ID, "shark");
 
-	/** A wild shark against a dolphin, which is 1. */
-	public static final float WILD_SCALE = 1.15F;
+	public static final EntityType<Shark> SHARK = FabricEntityType.Builder.createMob(Shark::new,
+			MobCategory.WATER_CREATURE, mob -> mob
+				.spawnPlacement(SpawnPlacementTypes.IN_WATER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+					AgeableWaterCreature::checkSurfaceAgeableWaterCreatureSpawnRules)
+				.defaultAttributes(Shark::createAttributes))
+		.sized(EntityTypes.DOLPHIN.getWidth(), EntityTypes.DOLPHIN.getHeight())
+		.eyeHeight(EntityTypes.DOLPHIN.getDimensions().eyeHeight())
+		.build(ResourceKey.create(Registries.ENTITY_TYPE, ID));
 
-	/**
-	 * Per unit of scale. A dolphin is 10 health and 3 damage; a shark is twice as hard to kill and
-	 * bites harder, and a bigger one more so, because a large shark that was only visually larger
-	 * would be a lie the first time one fought back.
-	 */
-	private static final double HEALTH_PER_SCALE = 20.0;
-	private static final double DAMAGE_PER_SCALE = 4.0;
+	private static final Identifier EGG_ID = Identifier.fromNamespaceAndPath(Main.MOD_ID, "shark_spawn_egg");
 
-	private static final Identifier ADULT_SKIN =
-		Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/entity/shark.png");
-	/** A pup is drawn with the baby dolphin's model, which lays its texture out differently. */
-	private static final Identifier PUP_SKIN =
-		Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/entity/shark_pup.png");
-
-	private static final Identifier SIZE_ID = Identifier.fromNamespaceAndPath(Main.MOD_ID, "shark_size");
-
-	public static boolean is(@Nullable Entity entity) {
-		return entity instanceof Dolphin && entity.entityTags().contains(TAG);
-	}
+	public static final Item SPAWN_EGG = new SpawnEggItem(new Item.Properties()
+		.setId(ResourceKey.create(Registries.ITEM, EGG_ID))
+		.spawnEgg(SHARK));
 
 	public static Identifier skin(boolean pup) {
-		return pup ? PUP_SKIN : ADULT_SKIN;
+		return Identifier.fromNamespaceAndPath(Main.MOD_ID,
+			pup ? "textures/entity/shark_pup.png" : "textures/entity/shark.png");
 	}
 
-	/**
-	 * Make this dolphin a shark of the given size, once.
-	 *
-	 * <p>Size, health and bite are written into the animal's own attributes, so they are saved with
-	 * it and nothing here has to say them again.
-	 */
-	public static void become(Dolphin dolphin, float scale) {
-		dolphin.addTag(TAG);
-		permanent(dolphin.getAttribute(Attributes.SCALE), scale - 1.0,
-			AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
-		permanent(dolphin.getAttribute(Attributes.MAX_HEALTH), HEALTH_PER_SCALE * scale - 10.0,
-			AttributeModifier.Operation.ADD_VALUE);
-		permanent(dolphin.getAttribute(Attributes.ATTACK_DAMAGE), DAMAGE_PER_SCALE * scale - 3.0,
-			AttributeModifier.Operation.ADD_VALUE);
-		dolphin.setHealth(dolphin.getMaxHealth());
-	}
+	public static void register() {
+		Registry.register(BuiltInRegistries.ENTITY_TYPE, ID, SHARK);
+		Registry.register(BuiltInRegistries.ITEM, EGG_ID, SPAWN_EGG);
 
-	private static void permanent(@Nullable AttributeInstance attribute, double amount,
-			AttributeModifier.Operation operation) {
-		if (attribute == null) return;
-		attribute.removeModifier(SIZE_ID);
-		attribute.addPermanentModifier(new AttributeModifier(SIZE_ID, amount, operation));
-	}
+		PandoricalApi.content().registerEntity(SHARK, new EntityRegistration()
+			.base(EntityTypes.DOLPHIN)
+			.texture(skin(false))
+			.babyTexture(skin(true))
+			.vanillaFallback());
+		PandoricalApi.content().registerItem(EGG_ID.toString(), new ItemRegistration());
 
-	/**
-	 * Everything about a shark that is not saved with it, said again each time it loads.
-	 *
-	 * <p>The skin is held in memory by Pandorical and dropped when the entity unloads, and goals are
-	 * never saved at all. A shark tagged by hand arrives with no size, so it gets the wild one.
-	 */
-	public static void ensure(Dolphin dolphin) {
-		if (!is(dolphin)) return;
-		AttributeInstance scale = dolphin.getAttribute(Attributes.SCALE);
-		if (scale != null && !scale.hasModifier(SIZE_ID)) become(dolphin, WILD_SCALE);
-		// A shark plays with nothing: a dolphin carrying a stick about is a dolphin.
-		dolphin.setCanPickUpLoot(false);
-		dress(dolphin);
-		Instincts.install(dolphin);
-	}
-
-	/** The right skin for the body it has now: a pup's model is not an adult's. */
-	public static void dress(Dolphin dolphin) {
-		if (!is(dolphin)) return;
-		PandoricalApi.entityOverlays().set(dolphin, skin(dolphin.isBaby()));
+		CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.SPAWN_EGGS)
+			.register(output -> output.accept(SPAWN_EGG));
 	}
 }

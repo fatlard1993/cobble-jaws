@@ -1,6 +1,6 @@
 # Cobble Jaws
 
-Sharks in the warm seas, built out of the dolphin the game already has. Leave one alone and it leaves you alone. Hit it, or swim too close to its pup, and it comes for you.
+Sharks in the warm seas. Leave one alone and it leaves you alone. Hit it, or swim too close to its pup, and it comes for you.
 
 ## What This Mod Does
 
@@ -26,29 +26,19 @@ Server-side; Pandorical carries the client's half.
 
 **It hunts.** Every so often a shark looks around for something to eat: cod, salmon, tropical fish, squid, glow squid, or any small animal in the water with it, such as a chicken, a rabbit, a frog or a calf that has wandered in. It eats what it kills, so nothing is left floating, and a meal heals it. It leaves pufferfish alone, and it leaves pets alone.
 
-**It is not a dolphin.** A shark breathes water, so it never breaks off a chase to surface. It gives no Dolphin's Grace when you swim beside it, won't take a fish from your hand, and doesn't push items around.
+**It is not a dolphin.** A shark breathes water, so it never breaks off a chase to surface. It doesn't swim alongside you handing out Dolphin's Grace, won't take a fish from your hand or lead you to treasure, and doesn't push items around.
 
-**Killing one** drops whitefish: raw cod, more for a bigger shark, on top of the cod a dolphin already drops. A pup drops nothing.
+**Killing one** drops two or three whitefish (raw cod), cooked if it was on fire. A pup drops nothing.
 
-## None Of It Is A New Animal
+**There is a Shark Spawn Egg**, with the other spawn eggs in creative. `/summon cobble-jaws-justfatlard:shark` works too.
 
-A shark is a `minecraft:dolphin`. A server-side mod can't hand a vanilla client a new creature to draw, so a new animal would be invisible to anybody not running the mod themselves. What a client *can* be told is that a familiar animal is a different size and wearing a different skin. So a shark is a dolphin, resized through the game's scale attribute and reskinned through Pandorical's entity overlay, with a dark back and a white belly.
+## Built On The Dolphin
 
-Everything that follows from that is deliberate. It swims, leaps, follows boats and calls its pod in when hit exactly as a dolphin does, because it is one. A command that looks for dolphins finds sharks too.
-
-**It is still called a Shark.** Death messages, block-tip's card and anywhere else the game names an animal say Shark. It is not a custom name, which would float over the animal and stop it ever despawning.
-
-Which dolphin is a shark is written on it as a scoreboard tag, `shark`. Tags are saved with the entity by the game itself, survive this mod being removed, and can be set by hand. A shark is summoned by tag:
-
-```
-/summon minecraft:dolphin ~ ~ ~ {Tags:["shark"]}
-```
-
-**The spawn egg hatches a dolphin**, as its name says. Used on a shark, it hatches a shark pup.
+A shark is its own animal, `cobble-jaws-justfatlard:shark`, with its own spawns, loot and behaviour. What a player's game is told to draw is a dolphin in a shark's skin, with a dark back and a white belly: Pandorical lets a server's mod add a new mob as long as it stands on one the game already knows how to move, and the dolphin is the one built like a shark already. So it swims, leaps and follows boats exactly as a dolphin does.
 
 ## Spawning
 
-Sharks are added on top of the dolphins, not in place of them. Each ocean that has dolphins gets one more dolphin spawn, and a matching share of the pods that arrive are sharks, so the dolphins are as common as they were. Sharks end up half as common as dolphins in the warm seas and as common as them in the open ocean. A pod is all sharks or all dolphins, never a mix.
+Sharks are added on top of the dolphins, not in place of them: half as common as dolphins in the warm seas and as common as them in the open ocean, in pods of one or two.
 
 ## Fishing For Them
 
@@ -61,9 +51,9 @@ Without Minedew Fishing there is no shark fishing; the sharks are simply in the 
 
 ## Pandorical
 
-Pandorical is required on the server; the mod will not load without it. The shark skins are sent to Pandorical clients as entity overlays.
+Pandorical is required on the server, and on a player's client to see sharks as sharks; the mod will not load without it on the server.
 
-**Without Pandorical client-side**, a player still meets the sharks with the right size, temper, appetite and drops. They just look like dolphins, because the client was never handed the skin. Nothing breaks, but the dolphin you thought you could swim up to is the thing to look out for.
+**Without Pandorical client-side**, a player sees each shark as a dolphin, and it still bites like a shark. The skin is the one thing such a client can't be handed. A dolphin that comes for you is a better warning than a shark you can't see.
 
 ## Development
 
