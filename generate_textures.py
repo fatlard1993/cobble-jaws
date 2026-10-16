@@ -226,25 +226,52 @@ def write_skin():
 
 
 EGG_SOURCE = "assets/minecraft/textures/item/dolphin_spawn_egg.png"
-# Above this a pixel of the egg is a spot, and the spots are belly white.
-EGG_SPOT = 200
+
+# The egg drawn by hand, a shark's face over the dolphin egg's water. "~" keeps the dolphin egg's
+# own pixel there, which is the water every sea creature's egg stands in.
+EGG = [
+    ".......oo.......",
+    "......ohbo......",
+    ".....ohhbdo.....",
+    "....ohhbbbdo....",
+    "...ohhbbbbbdo...",
+    "...ohbbbbbbdo...",
+    "..ohbbbbbbbbdo..",
+    "..obebbbbbbedo..",
+    ".ohbbbbbbbbbbdo.",
+    ".obbwwwwwwwwbdo.",
+    "obbwtmtmtmtmwbdo",
+    "obbwmtmtmtmtwddo",
+    "~~~oWWwwwwWWo~~~",
+    "~~~~~oWWWWo~~~~~",
+    "~~~~~~~~~~~~~~~~",
+    "~~~~~~~~~~~~~~~~",
+]
+EGG_COLOURS = {
+    "o": (38, 46, 56),
+    "d": (66, 76, 88),
+    "b": (88, 100, 112),
+    "h": (124, 138, 150),
+    "e": (12, 12, 16),
+    "w": (236, 238, 234),
+    "W": (196, 202, 204),
+    "m": (64, 22, 28),
+    "t": (250, 250, 244),
+}
 
 
 def write_egg():
     with zipfile.ZipFile(CLIENT_JAR) as jar, jar.open(EGG_SOURCE) as handle:
-        egg = Image.open(handle).convert("RGBA")
-        egg.load()
-    out = Image.new("RGBA", egg.size)
-    src, dst = egg.load(), out.load()
-    for y in range(egg.height):
-        for x in range(egg.width):
-            r, g, b, a = src[x, y]
-            if a == 0:
-                dst[x, y] = (0, 0, 0, 0)
-                continue
-            luma = (r * 299 + g * 587 + b * 114) // 1000
-            dark, light = (BELLY_DARK, BELLY_LIGHT) if luma >= EGG_SPOT else (BACK_DARK, BACK_LIGHT)
-            dst[x, y] = ramp(dark, light, min(1.0, luma / 255))
+        water = Image.open(handle).convert("RGBA")
+        water.load()
+    out = Image.new("RGBA", water.size)
+    dst = out.load()
+    for y, row in enumerate(EGG):
+        for x, key in enumerate(row):
+            if key == "~":
+                dst[x, y] = water.getpixel((x, y))
+            elif key != ".":
+                dst[x, y] = EGG_COLOURS[key] + (255,)
     path = ASSETS / "textures/item/shark_spawn_egg.png"
     out.save(path)
     print(path.relative_to(HERE))
