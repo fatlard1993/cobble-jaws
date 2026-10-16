@@ -57,8 +57,11 @@ import org.jspecify.annotations.Nullable;
  * near a pup and its mother comes for you, as a polar bear does over its cub. And it hunts.
  */
 public class Shark extends AgeableWaterCreature {
-	/** A wild shark's size against a dolphin's. Size is scale, never the hitbox. */
+	/** The smallest grown shark, against a dolphin. Size is scale, never the hitbox. */
 	public static final float WILD_SCALE = 1.15F;
+
+	/** The largest a grown shark comes, as big as the trophy on a line. */
+	public static final float LARGEST_WILD_SCALE = 1.7F;
 
 	/**
 	 * Per unit of scale. A dolphin is 10 health and 3 damage; a shark is twice as hard to kill and
@@ -162,8 +165,23 @@ public class Shark extends AgeableWaterCreature {
 			EntitySpawnReason spawnReason, @Nullable SpawnGroupData groupData) {
 		this.setXRot(0F);
 		// Now and then one of a pod is a pup, as with dolphins.
-		return super.finalizeSpawn(level, difficulty, spawnReason,
+		SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnReason,
 			groupData != null ? groupData : new AgeableMob.AgeableMobGroupData(0.1F));
+		if (!this.isBaby()) this.grow(this.grownScale());
+		return data;
+	}
+
+	/** A pup takes its grown size only as it grows up, so its mother's does not tell what it will be. */
+	@Override
+	protected void ageBoundaryReached() {
+		super.ageBoundaryReached();
+		if (!this.isBaby() && !this.level().isClientSide()) this.grow(this.grownScale());
+	}
+
+	/** Most sharks are near the smallest; the big ones are rare, and worth the telling. */
+	private float grownScale() {
+		float roll = this.random.nextFloat();
+		return WILD_SCALE + (LARGEST_WILD_SCALE - WILD_SCALE) * roll * roll;
 	}
 
 	@Override

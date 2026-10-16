@@ -13,9 +13,9 @@ Server-side; Pandorical carries the client's half.
 | | Shark | Dolphin, for comparison |
 |---|---|---|
 | Where | warm, lukewarm and deep lukewarm ocean, ocean, deep ocean | the same |
-| Size | a little bigger than a dolphin | |
-| Health | 23 | 10 |
-| Bite | 4.6 | 3 |
+| Size | grown, from a little bigger than a dolphin to half again that; most are near the small end | |
+| Health | 23 to 34, with its size | 10 |
+| Bite | 4.6 to 6.8, with its size | 3 |
 | Temper | ignores you unless hit, or unless you come near its pup | ignores you unless hit |
 | Eats | fish, squid, small animals in the water | nothing |
 | Breathes | water | air |

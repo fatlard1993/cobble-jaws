@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.fish.Cod;
@@ -61,6 +62,32 @@ public final class SharkBehaviour implements FabricClientGameTest {
 				check(made.getBreedOffspring(level, made) instanceof Shark, "a shark's pup is a dolphin");
 				return made.getUUID();
 			});
+
+			// Grown sharks come in sizes, none smaller than the smallest, and a pup takes one as it grows up.
+			String sizes = server.computeOnServer(s -> {
+				ServerLevel level = s.overworld();
+				float least = Float.MAX_VALUE, most = 0F;
+				for (int i = 0; i < 40; i++) {
+					Shark one = Sharks.SHARK.create(level, EntitySpawnReason.SPAWN_ITEM_USE);
+					one.finalizeSpawn(level, level.getCurrentDifficultyAt(tank), EntitySpawnReason.SPAWN_ITEM_USE,
+						new AgeableMob.AgeableMobGroupData(false));
+					least = Math.min(least, one.getScale());
+					most = Math.max(most, one.getScale());
+					if (Math.abs(one.getMaxHealth() - 20F * one.getScale()) > 0.01F) return "a shark's health is not its size";
+					one.discard();
+				}
+				if (least < Shark.WILD_SCALE - 0.001F || most > Shark.LARGEST_WILD_SCALE + 0.001F) {
+					return "grown sharks came from " + least + " to " + most;
+				}
+				if (most - least < 0.1F) return "forty grown sharks were all near one size: " + least + " to " + most;
+				Shark pup = Sharks.SHARK.create(level, EntitySpawnReason.BREEDING);
+				pup.setBaby(true);
+				pup.setAge(0);
+				if (pup.isBaby() || pup.getScale() < Shark.WILD_SCALE - 0.001F) return "a pup grew up to " + pup.getScale();
+				pup.discard();
+				return "";
+			});
+			check(sizes.isEmpty(), sizes);
 
 			// A Pandorical client draws it from its own body, under the shark's own type.
 			context.waitTicks(10);

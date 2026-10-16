@@ -3,6 +3,10 @@
 		"Sharks in the warm seas. They leave you alone until you hit one or come near its pup."
 	],
 	"versions": {
+		"1.3.0": [
+			"Grown sharks come in sizes, from a little bigger than a dolphin to half again that, and hit harder and take more killing the bigger they are. The big ones are rare.",
+			"A pup takes its size as it grows up."
+		],
 		"1.1.0": [
 			"Sharks have a shark's body: a tall dorsal fin, an upright tail, a blunt snout and a mouth full of teeth.",
 			"Pups are the same shape, smaller."
