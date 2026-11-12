@@ -1,0 +1,44 @@
+{
+  "demo": {
+    "name": "Cobble Jaws",
+    "icon": "cobble-jaws-justfatlard:shark_spawn_egg",
+    "about": [
+      "Sharks in the warm seas: they leave you alone until you hit one or come near its pup, and they hunt the fish around them.",
+      "Watch the sharks hunt the fish around you, then hit one with the trident and fight it off. Take down a shark to finish."
+    ],
+    "finish": true
+  },
+  "pvp_preset": 1,
+  "needs": ["cobble-jaws-justfatlard"],
+  "preset": {
+    "name": "Cobble Jaws",
+    "icon": "cobble-jaws-justfatlard:shark_spawn_egg",
+    "pvp": false,
+    "game_mode": "survival",
+    "entry_kit": [
+      {"slot": 0, "item": {"id": "minecraft:trident", "count": 1, "components": {"minecraft:enchantments": {"minecraft:loyalty": 3, "minecraft:impaling": 3}}}},
+      {"slot": 3, "item": {"id": "minecraft:oak_boat", "count": 1}},
+      {"slot": 4, "item": {"id": "minecraft:potion", "count": 2, "components": {"minecraft:potion_contents": {"potion": "minecraft:long_water_breathing"}}}},
+      {"slot": 5, "item": {"id": "minecraft:iron_sword", "count": 1}},
+      {"slot": 6, "item": {"id": "minecraft:cooked_cod", "count": 8}},
+      {"slot": 39, "item": {"id": "minecraft:turtle_helmet", "count": 1}},
+      {"slot": 38, "item": {"id": "minecraft:iron_chestplate", "count": 1}},
+      {"slot": 36, "item": {"id": "minecraft:iron_boots", "count": 1, "components": {"minecraft:enchantments": {"minecraft:depth_strider": 3}}}}
+    ],
+    "respawn_kit": "entry",
+    "goal": "mobs",
+    "mob_goal_kind": "cobble-jaws-justfatlard:shark",
+    "mob_goal_count": 1,
+    "goal_compass": true,
+    "mobs": "always",
+    "mob_rarity": "normal",
+    "mob_default": "off",
+    "mob_levels": { "cobble-jaws-justfatlard:shark": "normal", "minecraft:cod": "common", "minecraft:tropical_fish": "normal" },
+    "life": 15,
+    "size": 3,
+    "world": "overworld",
+    "shape": "natural",
+    "biome": "minecraft:warm_ocean",
+    "weather": "clear"
+  }
+}
