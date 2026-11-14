@@ -3,6 +3,9 @@
 		"Sharks in the warm seas. They leave you alone until you hit one or come near its pup."
 	],
 	"versions": {
+		"1.3.3": [
+			"A demo to play in PvP Dimensions' onboarding."
+		],
 		"1.3.2": [
 			"Drop changelog notes for changes nothing in the game shows."
 		],
